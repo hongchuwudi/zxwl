@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif; color: #333; line-height: 1.6; background: #f5f7fa; }
+        .container { width: 100%; max-width: 100%; padding: 0; margin: 0; }
+        .email-wrapper { width: 100%; min-height: 100vh; padding: 20px 10px; }
+        .email-content { width: 100%; max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #1890ff, #096dd9); color: white; padding: 30px 20px; text-align: center; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; font-weight: 600; }
+        .header p { font-size: 16px; opacity: 0.9; }
+        .content { padding: 30px 25px; }
+        .greeting { font-size: 18px; margin-bottom: 20px; color: #1f1f1f; }
+        .intro { font-size: 16px; margin-bottom: 25px; color: #666; line-height: 1.8; }
+        .code-section { text-align: center; margin: 30px 0; }
+        .code-label { font-size: 18px; color: #666; margin-bottom: 15px; }
+        .code { font-size: 32px; font-weight: bold; color: #1890ff; background: #e6f7ff; padding: 20px; margin: 15px 0; border-radius: 10px; border: 2px dashed #1890ff; letter-spacing: 3px; }
+        .tip-section { background: #fff2f0; border-left: 4px solid #ff4d4f; padding: 20px; border-radius: 8px; margin: 25px 0; }
+        .tip-title { color: #ff4d4f; font-weight: bold; font-size: 18px; margin-bottom: 12px; }
+        .tip-list { list-style: none; }
+        .tip-list li { margin-bottom: 8px; padding-left: 20px; position: relative; }
+        .tip-list li:before { content: "⚠️"; position: absolute; left: 0; }
+        .features-section { margin: 30px 0; }
+        .features-title { font-size: 18px; color: #1f1f1f; margin-bottom: 20px; font-weight: 600; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .feature-item { background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid #1890ff; }
+        .feature-icon { font-size: 20px; margin-bottom: 8px; }
+        .feature-text { font-size: 14px; color: #666; }
+        .footer { margin-top: 35px; padding-top: 25px; border-top: 1px solid #eee; color: #999; font-size: 13px; text-align: center; }
+        .footer p { margin-bottom: 8px; }
+        .contact { color: #1890ff; font-weight: 500; }
+
+        @media (max-width: 480px) {
+            .email-wrapper { padding: 15px 8px; }
+            .header { padding: 25px 15px; }
+            .header h1 { font-size: 22px; }
+            .content { padding: 25px 20px; }
+            .code { font-size: 28px; padding: 18px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .feature-item { padding: 12px; }
+        }
+
+        @media (max-width: 320px) {
+            .header { padding: 20px 12px; }
+            .content { padding: 20px 15px; }
+            .code { font-size: 24px; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="email-wrapper">
+        <div class="email-content">
+            <div class="header">
+                <h1>🎓 智选高考志愿服务平台</h1>
+                <p>助力每一位考生圆梦理想大学</p>
+            </div>
+
+            <div class="content">
+                <p class="greeting">尊敬的考生/家长：</p>
+
+                <p class="intro">感谢您使用<strong>智选高考志愿服务平台</strong>！我们致力于为高考学子提供最专业、最科学的志愿填报指导服务，帮助您精准定位理想院校。</p>
+
+                <div class="code-section">
+                    <div class="code-label">您的验证码为：</div>
+                    <div class="code">{{.VerificationCode}}</div>
+                </div>
+
+                <div class="tip-section">
+                    <div class="tip-title">⚠️ 重要提示</div>
+                    <ul class="tip-list">
+                        <li>此验证码有效期 <strong>15分钟</strong>，请及时使用</li>
+                        <li>请勿将验证码泄露给他人，平台工作人员不会向您索要验证码</li>
+                        <li>如非本人操作，请忽略此邮件以确保账号安全</li>
+                    </ul>
+                </div>
+
+                <div class="features-section">
+                    <div class="features-title">使用验证码登录后，您将享受以下服务：</div>
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">📊</div>
+                            <div class="feature-text">智能分析近5年录取分数线趋势</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🎯</div>
+                            <div class="feature-text">精准匹配适合的院校和专业组合</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📝</div>
+                            <div class="feature-text">个性化志愿填报方案一键生成</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔔</div>
+                            <div class="feature-text">推送最新高考咨询政策动态</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🚀</div>
+                            <div class="feature-text">智能分析近五年分数走向趋势</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🚩</div>
+                            <div class="feature-text">更多功能等你探索...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>如有任何疑问，请联系客服QQ：
+                        <span class="contact">1174598710</span>
+                        或者
+                        <span class="contact">2772167017</span>
+                    </p>
+                    <p>© 2025 智选高考志愿服务平台 - 让志愿填报更科学</p>
+                    <p>此邮件为系统自动发送，请勿直接回复，请勿恶意刷送</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

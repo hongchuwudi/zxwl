@@ -1,0 +1,15 @@
+/n_zxwl/env/
+/n_zxwl/.idea/
+*.iml
+/n_zxwl/env/*.txt
+/n_zxwl/env/*.key
+/n_zxwl/vue/node_modules/
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

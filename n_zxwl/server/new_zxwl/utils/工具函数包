@@ -1,0 +1,4 @@
+这个包下写一些实用的工具比如max,min,strSub....
+
+getGoPath    获取go绝对路径
+getGoProPath 获取项目绝对路径

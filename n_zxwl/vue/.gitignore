@@ -1,0 +1,27 @@
+
+<<<<<<<< HEAD:client/vue/.gitignore
+node_modules
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+
+/cypress/videos/
+/cypress/screenshots/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+*.tsbuildinfo
+========
+#忽略 env
+env/*
+>>>>>>>> 3539193 (01-导出sql):client/.gitignore

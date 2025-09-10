@@ -1,0 +1,22 @@
+说明:
+1.这些文件必须自己创建在与vue和server同目录下的env文件夹里边:
+baidu_api_ak.txt     百度地图前端api秘钥-手动填写,可以去官网申请,不能选择后端秘钥
+
+database_config.txt  数据库-手动填写,格式如下
+DBHost=xxxx
+DBPort=xxxx
+DBUser=xxxx
+DBPassword=xxxx
+DBName=xxxx
+
+email_config.txt     qq邮箱-用Create.exe设置,Create的源码在server的new_zxwl/testmain中
+
+email_key.txt        邮箱授权码-用Create.exe设置
+
+qwen_api_ak.txt	     通义apiKey-手动填写
+
+注意:
+1.只有这些文件存在在这个env目录下才可以编译(run)或者打包(build)
+2.打包会把这些配置加载到程序中,之后这些文件的位置就无所谓了
+3.所有的关键配置都在这里了,无序在代码中查找配置
+4,当要把项目发给别人看的时候一定要把这些配置删掉,尤其是邮箱

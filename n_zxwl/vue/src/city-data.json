@@ -1,0 +1,30 @@
+[
+  {
+    "value": "zhejiang",
+    "label": "浙江省",
+    "children": [
+      {
+        "value": "hangzhou",
+        "label": "杭州市"
+      },
+      {
+        "value": "ningbo",
+        "label": "宁波市"
+      }
+    ]
+  },
+  {
+    "value": "jiangsu",
+    "label": "江苏省",
+    "children": [
+      {
+        "value": "nanjing",
+        "label": "南京市"
+      },
+      {
+        "value": "suzhou",
+        "label": "苏州市"
+      }
+    ]
+  }
+]
