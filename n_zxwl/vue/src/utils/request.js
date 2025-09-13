@@ -3,7 +3,7 @@ import {ElMessage} from "element-plus";
 import router from "@/router/index.js";
 
 const request = axios.create({
-    baseURL:'http://localhost:8791',
+    baseURL:'/gapi',
     timeout:30000
 })
 

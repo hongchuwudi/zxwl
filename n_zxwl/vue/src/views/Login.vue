@@ -105,25 +105,28 @@ const login = () => {
 
     try {
       isLogging.value = true;
-      const response = await axios.post("gapi/auth", {
-        email: data.form.email,
-        passwd: data.form.passwd,
+      const response = await axios.post("gapi/user/login", {
+        login: data.form.email,
+        password: data.form.passwd,
       }, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
+      console.log()
+
       if (response.data.code === 0) {
         ElMessage.success("登录成功");
 
         // 保存用户信息（从邮箱提取用户名）
         const userInfo = {
-          name: data.form.email.split('@')[0], // 从邮箱提取用户名
+          name: response.data.data.user.username,
+          id: response.data.data.user.id,
           email: data.form.email
         };
         saveUser(userInfo);
-        window.localStorage.setItem("userEmail", data.form.email);
+        // window.localStorage.setItem("userEmail", data.form.email);
 
         // 添加日志
         const logData = {

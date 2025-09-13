@@ -153,13 +153,13 @@ const register = async () => {
     isSubmitting.value = true
 
     const postData = {
-      user: data.form.username,
+      username: data.form.username,
       email: data.form.email,
-      passwd: data.form.password,
-      varifycode: data.form.verificationCode
+      password: data.form.password,
+      verify_code: data.form.verificationCode
     }
 
-    const response = await axios.post('gapi/reset_pwd', postData)
+    const response = await axios.post('gapi/user/change-password', postData)
 
     if (response.data.error === 0) {
       ElMessage.success('密码重置成功')

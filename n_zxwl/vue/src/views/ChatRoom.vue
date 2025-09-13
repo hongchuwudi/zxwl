@@ -208,7 +208,6 @@ const isSelf = (email) => {
   return email === localStorage.getItem('userEmail')
 }
 
-
 // 格式化时间
 const formatTime = (date) => {
   return new Date(date).toLocaleTimeString('zh-CN', {

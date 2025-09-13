@@ -292,7 +292,7 @@ CREATE TABLE `familyshare` (
 -- Table structure for table `logtextuser`
 --
 
-DROP TABLE IF EXISTS `logtextuser`;
+DROP TABLE IF EXISTS log_user_do;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `logtextuser` (
@@ -484,7 +484,7 @@ CREATE TABLE `professional` (
 -- Table structure for table `profile`
 --
 
-DROP TABLE IF EXISTS `profile`;
+DROP TABLE IF EXISTS s;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `profile` (
@@ -1005,7 +1005,7 @@ CREATE TABLE `universities_video` (
 -- Table structure for table `user`
 --
 
-DROP TABLE IF EXISTS `user`;
+DROP TABLE IF EXISTS user_info;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user` (
@@ -1031,8 +1031,8 @@ CREATE TABLE `user` (
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 /*!50032 DROP TRIGGER IF EXISTS insert_user_trigger */;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `insert_user_trigger` AFTER INSERT ON `user` FOR EACH ROW BEGIN
-INSERT INTO profile (id, name, email)
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `insert_user_trigger` AFTER INSERT ON user_info FOR EACH ROW BEGIN
+INSERT INTO s (id, name, email)
 VALUES (NEW.id, NEW.name, NEW.email);
 END */;;
 DELIMITER ;
@@ -1050,8 +1050,8 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 /*!50032 DROP TRIGGER IF EXISTS update_user_trigger */;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `update_user_trigger` AFTER UPDATE ON `user` FOR EACH ROW BEGIN
-UPDATE profile
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `update_user_trigger` AFTER UPDATE ON user_info FOR EACH ROW BEGIN
+UPDATE s
 SET name = NEW.name, email = NEW.email
 WHERE id = NEW.id;
 END */;;
@@ -1135,7 +1135,7 @@ SET character_set_client = @saved_cs_client;
 -- Table structure for table `verify_codes`
 --
 
-DROP TABLE IF EXISTS `verify_codes`;
+DROP TABLE IF EXISTS user_verify_codes;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `verify_codes` (

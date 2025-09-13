@@ -39,25 +39,25 @@ export default defineConfig({
     },
     // 配置服务器代理
     server: {
-        // 代理配置
         proxy: {
-            // 代理/gapi路径
             '/gapi': {
                 target: 'http://127.0.0.1:8792',                                            // 目标地址
                 changeOrigin: true,                                                         // 是否改变源地址
                 rewrite: (path) => path.replace(/^\/gapi/, '') // 重写路径
-            },
-            '/xapi': {
-                target: 'https://dashscope.aliyuncs.com',
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/xapi/, ''),
             }
         }
     },
     build: {
         rollupOptions: {
             input: {
-                main: 'index.html'
+                main: './public/index.html'
+            }
+        }
+    },
+    dev:{
+        rollupOptions: {
+            input: {
+                main: './public/index.html'
             }
         }
     }

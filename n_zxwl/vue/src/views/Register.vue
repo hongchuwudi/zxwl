@@ -105,6 +105,7 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Message, Key } from '@element-plus/icons-vue'
 import axios from 'axios'
+import DeviceUtils from '@/utils/deviceInfo'
 
 const formRef = ref()
 const isCodeSending = ref(false)
@@ -176,32 +177,31 @@ const getVerificationCode = async () => {
 }
 
 const handleRegister = async () => {
+  const myDeviceInfo = DeviceUtils.getDeviceInfoJSON()
+
   try {
     await formRef.value.validate()
     isRegistering.value = true
 
     const registerData = {
-      user: form.username,
+      userName: form.username,
       email: form.email,
-      passwd: form.password,
+      password: form.password,
       confirm: form.confirmPassword,
-      varifycode: form.verificationCode
+      verifyCode: form.verificationCode,
+      device_info: myDeviceInfo
     }
 
-    const response = await axios.post('gapi/user_register', registerData)
+    const response = await axios.post('gapi/user/register', registerData)
 
     if (response.data.error === 0) {
       ElMessage.success('注册成功')
       setTimeout(() => {
         window.location.href = '/login'
-      }, 1500)
-    }else if(response.data.error === 1003){
-      ElMessage.error('验证码过期')
-    }else if(response.data.error === 1004){
-      ElMessage.error('验证码错误')
-    }else if(response.data.error === 1005){
-      ElMessage.error('用户或电子邮件已存在')
-    }
+      }, 1200)
+    }else if(response.data.error === 1003) ElMessage.error('验证码过期')
+    else if(response.data.error === 1004) ElMessage.error('验证码错误')
+    else if(response.data.error === 1005) ElMessage.error('用户或电子邮件已存在')
   }
     catch (error) {
     ElMessage.error(error.response.data.msg || '注册失败')

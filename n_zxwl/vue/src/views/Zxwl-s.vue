@@ -46,7 +46,7 @@
                   个人中心
                 </router-link>
 
-                <template v-if="userEmail === 'root@root.com'">
+                <template v-if="userData.email === 'root@root.com'">
                   <div class="menu-divider"></div>
 
                   <router-link to="/admin/users" class="menu-item" @click="isUserMenuVisible = false">
@@ -147,13 +147,23 @@ import { gsap } from 'gsap';
 import { useRouter } from 'vue-router';
 import { ParticleEngine } from '@/utils/particleEngine';
 import { useUserStore } from  '@/utils/auth.js'
-import SearchResults from './new_zxwl/components/searchSchAndSpe.vue'
+import SearchResults from '../components/searchSchAndSpe.vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue';
 import {ElMessage} from "element-plus";
-const router = useRouter();
+import schoolsImage from '../assets/chun.jpg';
+import majorsImage from '../assets/xia.jpg';
+import policyImage from '../assets/qiu.jpg';
+import simulateImage from '../assets/dong.jpg';
+import materialsImage from '../assets/bbjj.jpg';
+import axios from "axios";
 
-// 用户相关状态
-const {deleteUser } = useUserStore()
+const router = useRouter();
+const userData = ref({
+  name: '',
+  email: ''
+})
+
+const {deleteUser,getUser } = useUserStore()
 const isLoggedIn = ref(true);
 const isUserMenuVisible = ref(false);
 const userSectionRef = ref(null);
@@ -161,12 +171,7 @@ const userEmail = localStorage.getItem('userEmail')
 // 粒子引擎实例
 const canvasRef = ref(null);
 let particleEngine = null;
-import schoolsImage from '../assets/chun.jpg';
-import majorsImage from '../assets/xia.jpg';
-import policyImage from '../assets/qiu.jpg';
-import simulateImage from '../assets/dong.jpg';
-import materialsImage from '../assets/bbjj.jpg';
-import axios from "axios";
+
 // 导航项数据
 const navItems = [
   { name: '智选对话', path: '/aismartsel'},
@@ -325,6 +330,7 @@ const resetNavHover = (index) => {
 
 // 生命周期
 onMounted(() => {
+
   particleEngine = new ParticleEngine(canvasRef.value);
   particleEngine.init();
 
@@ -341,6 +347,13 @@ onMounted(() => {
 
   startAutoPlay();
   window.addEventListener('click', handleClickOutside);
+
+  const user = getUser();
+  if (user)
+    userData.value = {
+      name: user.name || '',
+      email: user.email || ''
+    }
 });
 
 onUnmounted(() => {

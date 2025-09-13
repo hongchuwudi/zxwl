@@ -514,7 +514,7 @@ const clearHistory = () => {
     messages.value = []
   }
 }
-const handleBack = () => router.push('/zxwl')
+const handleBack = () => router.back()
 
 
 onMounted(async () => {

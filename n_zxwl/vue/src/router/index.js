@@ -50,7 +50,7 @@ const router = createRouter({
             component: () => import('../views/AiSmartsel.vue'),
         },
         {
-            path: '/Zxwl',
+            path: '/zxwl',
             name: 'Zxwl',
             meta: {title: '智选未来首页'},
             component: () => import('../views/Zxwl-s.vue'),
@@ -62,7 +62,7 @@ const router = createRouter({
             component: () => import('../views/profile.vue'),
         },
         {
-            path: '/chat/:id',
+            path: '/chat',
             name: 'ChatRoom',
             component: () => import('@/views/ChatRoom.vue')
         },
@@ -73,13 +73,6 @@ const router = createRouter({
             component: () => import('../views/professional.vue'),
             props: true
         },
-        {
-            path: '/recommend',
-            name: 'recommend',
-            component: () => import('../views/recommend.vue'),
-            props: true
-        },
-
         {
             path: '/admin',
             children: [
@@ -93,49 +86,49 @@ const router = createRouter({
         {
             path: '/specialDetail',
             name: 'specialDetail',
-            component: () => import('../views/new_zxwl/specialDetail.vue'),
+            component: () => import('../views/specialDetail.vue'),
             props: (route) => ({id: route.query.id})
         },
         {
             path: '/recommends',
             name: 'recommends',
-            component: () => import('../views/new_zxwl/recommends.vue'),
+            component: () => import('../views/recommends.vue'),
             props: true
         },
         {
             path: '/schoolDetail',
             name: 'schoolDetail',
-            component: () => import('../views/new_zxwl/schoolDetail.vue'),
+            component: () => import('../views/schoolDetail.vue'),
             props: (route) => ({id: route.query.id})
         },
         {
             path: '/allSchool',
             name: 'allSchool',
-            component: () => import('../views/new_zxwl/allSchool.vue'),
+            component: () => import('../views/allSchool.vue'),
             props: true
         },
         {
             path: '/searchUAS', // universities and Specials
             name: 'searchUAS',
-            component: () => import('../views/new_zxwl/components/searchSchAndSpe.vue'),
+            component: () => import('../components/searchSchAndSpe.vue'),
             props: true
         },
         {
             path: '/news',  // news是资讯的意思
             name: 'allNews',
-            component: () => import('../views/new_zxwl/allNews.vue'),
+            component: () => import('../views/allNews.vue'),
             props: true
         },
         {
             path: '/newsDetail',
             name: 'newsDetail',
-            component: () => import('../views/new_zxwl/newsDetail.vue')
+            component: () => import('../views/newsDetail.vue')
             // props: true
         },
         {
           path: '/videoCall',
           name: 'videoCall',
-          component: () => import('../views/new_zxwl/videoCall.vue'),
+          component: () => import('../views/videoCallMain.vue'),
         },
         // 404 页面 - 必须放在最后
         {
