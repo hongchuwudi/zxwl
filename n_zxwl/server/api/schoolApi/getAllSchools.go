@@ -14,7 +14,7 @@ import (
 func CollegesHandlers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method != http.MethodGet {
-		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		http.Error(w, `{"error": "请求方式不对"}`, http.StatusMethodNotAllowed)
 		return
 	}
 	repo := schoolRepo.NewUniversityRepository(config.GetDB())

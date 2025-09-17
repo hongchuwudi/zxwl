@@ -6,8 +6,9 @@ import (
 
 // LoginRequest 登录请求
 type LoginRequest struct {
-	Login    string `json:"login"` // 可以是邮箱或用户名
-	Password string `json:"password"`
+	Login      string `json:"login"` // 可以是邮箱或用户名
+	Password   string `json:"password"`
+	DeviceInfo string `json:"device_info"`
 }
 
 // LoginResponse 登录响应

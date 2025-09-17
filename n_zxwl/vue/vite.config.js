@@ -40,6 +40,12 @@ export default defineConfig({
     // 配置服务器代理
     server: {
         proxy: {
+            '/gapi/ws/': {
+                target: 'ws://127.0.0.1:8792',
+                changeOrigin: true,
+                ws: true,
+                rewrite: (path) => path.replace(/^\/gapi\/ws/, '/ws') // 修改重写规则
+            },
             '/gapi': {
                 target: 'http://127.0.0.1:8792',                                            // 目标地址
                 changeOrigin: true,                                                         // 是否改变源地址

@@ -36,6 +36,12 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	if req.DeviceInfo == "" {
+		response.Error = http.StatusBadRequest
+		response.Message = "设备检测失败"
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	loginResp, err := h.userService.Login(req)
 	if err != nil {

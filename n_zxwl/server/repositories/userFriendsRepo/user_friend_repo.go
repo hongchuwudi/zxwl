@@ -1,127 +1,114 @@
-// Package userFriendsRepo repository/user_friends_repo.go
+// Package userFriendsRepo repository/friend_repository.go
 package userFriendsRepo
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"mymod/model/sqlModel"
 )
 
-type UserFriendsRepository struct {
-	db *gorm.DB
+type FriendRepository struct {
+	Db *gorm.DB
 }
 
-// NewUserFriendsRepository 创建好友仓库实例
-func NewUserFriendsRepository(db *gorm.DB) UserFriendsRepository {
-	return UserFriendsRepository{db: db}
+func NewFriendRepository(db *gorm.DB) *FriendRepository {
+	return &FriendRepository{Db: db}
+}
+
+// CheckFriendship 检查是否已经是好友
+func (r *FriendRepository) CheckFriendship(userID, friendID int64) (bool, error) {
+	var count int64
+	err := r.Db.Model(&sqlModel.UserFriend{}).
+		Where("(user_a_id = ? AND user_b_id = ?) OR (user_a_id = ? AND user_b_id = ?)",
+			userID, friendID, friendID, userID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// CheckFriendRequest 检查是否存在待处理的好友请求
+func (r *FriendRepository) CheckFriendRequest(fromUserID, toUserID int64) (bool, error) {
+	var count int64
+	err := r.Db.Model(&sqlModel.FriendRequest{}).
+		Where("from_user_id = ? AND to_user_id = ? AND status = 'pending'", fromUserID, toUserID).
+		Count(&count).Error
+	return count > 0, err
 }
 
 // CreateFriendRequest 创建好友请求
-func (r *UserFriendsRepository) CreateFriendRequest(friendRequest *sqlModel.UserFriend) error {
-	return r.db.Create(friendRequest).Error
+func (r *FriendRepository) CreateFriendRequest(request *sqlModel.FriendRequest) (error, int64) {
+	return r.Db.Create(request).Error, request.ID
 }
 
-// GetFriendRequest 获取好友关系
-func (r *UserFriendsRepository) GetFriendRequest(userID, friendID int64) (*sqlModel.UserFriend, error) {
-	var friendRequest sqlModel.UserFriend
-	err := r.db.Where("user_id = ? AND friend_id = ?", userID, friendID).First(&friendRequest).Error
-	if err != nil {
-		return nil, err
-	}
-	return &friendRequest, nil
+// GetFriendRequestByID 根据ID获取好友请求
+func (r *FriendRepository) GetFriendRequestByID(requestID int64) (*sqlModel.FriendRequest, error) {
+	var request sqlModel.FriendRequest
+	err := r.Db.Preload("FromUser").First(&request, requestID).Error
+	return &request, err
 }
 
-// UpdateFriendStatus 更新好友状态
-func (r *UserFriendsRepository) UpdateFriendStatus(userID, friendID int64, status string) error {
-	return r.db.Model(&sqlModel.UserFriend{}).
-		Where("user_id = ? AND friend_id = ?", userID, friendID).
+// UpdateFriendRequestStatus 更新好友请求状态
+func (r *FriendRepository) UpdateFriendRequestStatus(requestID int64, status string) error {
+	return r.Db.Model(&sqlModel.FriendRequest{}).
+		Where("id = ?", requestID).
 		Update("status", status).Error
 }
 
-// DeleteFriend 删除好友关系
-func (r *UserFriendsRepository) DeleteFriend(userID, friendID int64) error {
-	return r.db.Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
-		userID, friendID, friendID, userID).Delete(&sqlModel.UserFriend{}).Error
+// CreateFriendship 创建好友关系
+func (r *FriendRepository) CreateFriendship(friendship *sqlModel.UserFriend) error {
+	return r.Db.Create(friendship).Error
 }
 
-// GetUserFriends 获取用户好友列表（包含好友信息）
-func (r *UserFriendsRepository) GetUserFriends(userID int64, status string) ([]sqlModel.FriendResponse, error) {
-	var friends []sqlModel.FriendResponse
-
-	query := `
-		SELECT uf.*, 
-		       up.id as friend_info_id, 
-		       up.username as friend_info_username,
-		       up.email as friend_info_email,
-		       up.avatar_url as friend_info_avatar_url,
-		       up.display_name as friend_info_display_name,
-		       up.gender as friend_info_gender,
-		       up.is_online as friend_info_is_online
-		FROM user_friend uf
-		LEFT JOIN user_profile up ON 
-			CASE 
-				WHEN uf.user_id = ? THEN uf.friend_id = up.id
-				WHEN uf.friend_id = ? THEN uf.user_id = up.id
-			END
-		WHERE (uf.user_id = ? OR uf.friend_id = ?) AND uf.status = ?
-		ORDER BY uf.updated_at DESC
-	`
-
-	err := r.db.Raw(query, userID, userID, userID, userID, status).Scan(&friends).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return friends, nil
+// DeleteFriendship 删除好友关系
+func (r *FriendRepository) DeleteFriendship(userID, friendID int64) error {
+	return r.Db.Where("(user_a_id = ? AND user_b_id = ?) OR (user_a_id = ? AND user_b_id = ?)",
+		userID, friendID, friendID, userID).
+		Delete(&sqlModel.UserFriend{}).Error
 }
 
-// GetPendingRequests 获取待处理的好友请求
-func (r *UserFriendsRepository) GetPendingRequests(userID int64) ([]sqlModel.FriendResponse, error) {
-	var requests []sqlModel.FriendResponse
-
-	query := `
-		SELECT uf.*, 
-		       up.id as friend_info_id, 
-		       up.username as friend_info_username,
-		       up.email as friend_info_email,
-		       up.avatar_url as friend_info_avatar_url,
-		       up.display_name as friend_info_display_name,
-		       up.gender as friend_info_gender,
-		       up.is_online as friend_info_is_online
-		FROM user_friend uf
-		LEFT JOIN user_profile up ON uf.user_id = up.id
-		WHERE uf.friend_id = ? AND uf.status = 'pending'
-		ORDER BY uf.created_at DESC
-	`
-
-	err := r.db.Raw(query, userID).Scan(&requests).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return requests, nil
+// SetFriendNickname 设置好友昵称
+func (r *FriendRepository) SetFriendNickname(nickname *sqlModel.FriendNickname) error {
+	return r.Db.Save(nickname).Error
 }
 
-// CheckFriendRelation 检查好友关系是否存在
-func (r *UserFriendsRepository) CheckFriendRelation(userID, friendID int64) (bool, error) {
-	var count int64
-	err := r.db.Model(&sqlModel.UserFriend{}).
-		Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
-			userID, friendID, friendID, userID).
-		Count(&count).Error
-	if err != nil {
-		return false, err
+// GetFriendNickname 获取好友昵称
+func (r *FriendRepository) GetFriendNickname(userID, friendID int64) (*sqlModel.FriendNickname, error) {
+	var nickname sqlModel.FriendNickname
+	err := r.Db.Where("user_id = ? AND friend_id = ?", userID, friendID).First(&nickname).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
-	return count > 0, nil
+	return &nickname, err
 }
 
-// GetFriendCount 获取好友数量
-func (r *UserFriendsRepository) GetFriendCount(userID int64) (int64, error) {
-	var count int64
-	err := r.db.Model(&sqlModel.UserFriend{}).
-		Where("(user_id = ? OR friend_id = ?) AND status = 'accepted'", userID, userID).
-		Count(&count).Error
-	if err != nil {
-		return 0, err
+// GetUserFriends 获取用户的所有好友
+func (r *FriendRepository) GetUserFriends(userID int64) ([]sqlModel.UserFriend, error) {
+	var friendships []sqlModel.UserFriend
+	err := r.Db.Preload("UserA").Preload("UserB").
+		Where("user_a_id = ? OR user_b_id = ?", userID, userID).
+		Find(&friendships).Error
+	for i := range friendships {
+		if friendships[i].UserAID == userID {
+			friendships[i].UserA = friendships[i].UserB
+		}
+		friendships[i].UserB = sqlModel.UserProfile{} // 清空当前用户信息
 	}
-	return count, nil
+	return friendships, err
+}
+
+// GetFriendRequestsToMe 获取发给我的好友请求
+func (r *FriendRepository) GetFriendRequestsToMe(userID int64) ([]sqlModel.FriendRequest, error) {
+	var requests []sqlModel.FriendRequest
+	err := r.Db.Preload("FromUser").
+		Where("to_user_id = ? AND status = 'pending'", userID).
+		Find(&requests).Error
+	return requests, err
+}
+
+// GetFriendRequestsFromMe 获取我发出的好友请求
+func (r *FriendRepository) GetFriendRequestsFromMe(userID int64) ([]sqlModel.FriendRequest, error) {
+	var requests []sqlModel.FriendRequest
+	err := r.Db.Preload("ToUser").
+		Where("from_user_id = ? AND status = 'pending'", userID).
+		Find(&requests).Error
+	return requests, err
 }

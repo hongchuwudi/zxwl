@@ -26,3 +26,10 @@ type ScoreSection struct {
 	RankEnd       int     `gorm:"not null" json:"rank_end"`
 	TotalStudents int     `gorm:"not null" json:"total_students"`
 }
+
+func (ScoreExamInfo) TableName() string {
+	return "score_exam_info"
+}
+func (ScoreSection) TableName() string {
+	return "score_section"
+}

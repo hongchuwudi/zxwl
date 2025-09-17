@@ -138,8 +138,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { useUserStore } from '@/utils/auth.js'
-import EditNewsDrawer from '../components/editNews.vue'
-import NewsComments from '../components/newsComments.vue'
+import EditNewsDrawer from '../../components/editNews.vue'
+import NewsComments from '../../components/newsComments.vue'
 import { LikeOutlined, LikeFilled } from '@ant-design/icons-vue'
 
 // 统一导入所有图标

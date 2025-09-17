@@ -1,117 +1,211 @@
-// Package service/user_friends_service.go
+// Package service service/friend_service.go
 package service
 
 import (
 	"errors"
-	"fmt"
+	"gorm.io/gorm"
 	"mymod/model/sqlModel"
 	"mymod/repositories/userFriendsRepo"
+	"time"
 )
 
-type UserFriendsService struct {
-	repo userFriendsRepo.UserFriendsRepository
+type FriendService struct {
+	repo *userFriendsRepo.FriendRepository
 }
 
-func NewUserFriendsService(repo userFriendsRepo.UserFriendsRepository) UserFriendsService {
-	return UserFriendsService{repo: repo}
+func NewFriendService(repo *userFriendsRepo.FriendRepository) *FriendService {
+	return &FriendService{repo: repo}
 }
 
-// AddFriend 添加好友
-func (s *UserFriendsService) AddFriend(userID int64, request *sqlModel.AddFriendRequest) error {
+// SendFriendRequest 发送好友请求
+func (s *FriendService) SendFriendRequest(fromUserID, toUserID int64, salutation, message *string) (error, int64) {
 	// 检查是否已经是好友
-	exists, err := s.repo.CheckFriendRelation(userID, request.FriendID)
+	isFriend, err := s.repo.CheckFriendship(fromUserID, toUserID)
 	if err != nil {
-		return fmt.Errorf("检查好友关系失败: %v", err)
+		return err, 0
 	}
-	if exists {
-		return errors.New("已经是好友关系或已发送请求")
-	}
-
-	// 检查不能添加自己为好友
-	if userID == request.FriendID {
-		return errors.New("不能添加自己为好友")
+	if isFriend {
+		return errors.New("已经是好友关系"), 0
 	}
 
-	friendRequest := &sqlModel.UserFriend{
-		UserID:         int(userID),
-		FriendID:       int(request.FriendID),
-		Status:         sqlModel.FriendStatusPending,
-		Salutation:     request.Salutation,
-		RequestMessage: request.RequestMessage,
+	// 检查是否已经发送过请求
+	hasRequest, err := s.repo.CheckFriendRequest(fromUserID, toUserID)
+	if err != nil {
+		return err, 0
+	}
+	if hasRequest {
+		return errors.New("已经发送过好友请求"), 0
 	}
 
-	return s.repo.CreateFriendRequest(friendRequest)
+	// 创建好友请求
+	request := &sqlModel.FriendRequest{
+		FromUserID:     fromUserID,
+		ToUserID:       toUserID,
+		Salutation:     salutation,
+		RequestMessage: message,
+		Status:         "pending",
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	return s.repo.CreateFriendRequest(request)
 }
 
-// AcceptFriend 同意好友请求
-func (s *UserFriendsService) AcceptFriend(userID, friendID int64) error {
-	// 检查请求是否存在
-	request, err := s.repo.GetFriendRequest(friendID, userID)
+// AcceptFriendRequest 接受好友请求
+func (s *FriendService) AcceptFriendRequest(requestID, userID int64) error {
+	// 获取请求
+	request, err := s.repo.GetFriendRequestByID(requestID)
 	if err != nil {
-		return errors.New("好友请求不存在")
+		return err
 	}
 
-	if request.Status != sqlModel.FriendStatusPending {
-		return errors.New("好友请求状态不正确")
+	// 验证权限
+	if request.ToUserID != userID {
+		return errors.New("无权操作此请求")
 	}
 
-	return s.repo.UpdateFriendStatus(friendID, userID, sqlModel.FriendStatusAccepted)
+	if request.Status != "pending" {
+		return errors.New("请求状态不正确")
+	}
+
+	// 开始事务
+	tx := s.repo.Db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 获取请求
+	request, err = s.repo.GetFriendRequestByID(requestID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 验证权限
+	if request.ToUserID != userID {
+		tx.Rollback()
+		return errors.New("无权操作此请求")
+	}
+
+	if request.Status != "pending" {
+		tx.Rollback()
+		return errors.New("请求状态不正确")
+	}
+
+	// 更新请求状态
+	if err := tx.Model(&sqlModel.FriendRequest{}).Where("id = ?", requestID).Update("status", "accepted").Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 创建好友关系
+	friendship := &sqlModel.UserFriend{
+		UserAID:      request.FromUserID,
+		UserBID:      request.ToUserID,
+		RelationType: "normal",
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	if err := tx.Create(friendship).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 提交事务
+	return tx.Commit().Error
 }
 
-// RejectFriend 拒绝好友请求
-func (s *UserFriendsService) RejectFriend(userID, friendID int64) error {
-	// 检查请求是否存在
-	request, err := s.repo.GetFriendRequest(friendID, userID)
+// RejectFriendRequest 拒绝好友请求
+func (s *FriendService) RejectFriendRequest(requestID, userID int64) error {
+	request, err := s.repo.GetFriendRequestByID(requestID)
 	if err != nil {
-		return errors.New("好友请求不存在")
+		return err
 	}
 
-	if request.Status != sqlModel.FriendStatusPending {
-		return errors.New("好友请求状态不正确")
+	if request.ToUserID != userID {
+		return errors.New("无权操作此请求")
 	}
 
-	return s.repo.DeleteFriend(friendID, userID)
+	return s.repo.UpdateFriendRequestStatus(requestID, "rejected")
 }
 
 // DeleteFriend 删除好友
-func (s *UserFriendsService) DeleteFriend(userID, friendID int64) error {
+func (s *FriendService) DeleteFriend(userID, friendID int64) error {
 	// 检查是否是好友
-	exists, err := s.repo.CheckFriendRelation(userID, friendID)
+	isFriend, err := s.repo.CheckFriendship(userID, friendID)
 	if err != nil {
-		return fmt.Errorf("检查好友关系失败: %v", err)
+		return err
 	}
-	if !exists {
+	if !isFriend {
 		return errors.New("不是好友关系")
 	}
 
-	return s.repo.DeleteFriend(userID, friendID)
+	return s.repo.DeleteFriendship(userID, friendID)
 }
 
-// GetFriends 获取好友列表
-func (s *UserFriendsService) GetFriends(userID int64) ([]sqlModel.FriendResponse, error) {
-	return s.repo.GetUserFriends(userID, sqlModel.FriendStatusAccepted)
-}
-
-// GetPendingRequests 获取待处理的好友请求
-func (s *UserFriendsService) GetPendingRequests(userID int64) ([]sqlModel.FriendResponse, error) {
-	return s.repo.GetPendingRequests(userID)
-}
-
-// BlockFriend 拉黑好友
-func (s *UserFriendsService) BlockFriend(userID, friendID int64) error {
+// SetFriendNickname 设置好友昵称
+func (s *FriendService) SetFriendNickname(userID, friendID int64, nickname string) error {
 	// 检查是否是好友
-	exists, err := s.repo.CheckFriendRelation(userID, friendID)
+	isFriend, err := s.repo.CheckFriendship(userID, friendID)
 	if err != nil {
-		return fmt.Errorf("检查好友关系失败: %v", err)
+		return err
 	}
-	if !exists {
-		return errors.New("不是好友关系")
+	if !isFriend {
+		return errors.New("不是好友关系，无法设置昵称")
 	}
 
-	return s.repo.UpdateFriendStatus(userID, friendID, sqlModel.FriendStatusBlocked)
+	nicknameRecord := &sqlModel.FriendNickname{
+		UserID:    userID,
+		FriendID:  friendID,
+		Nickname:  nickname,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return s.repo.SetFriendNickname(nicknameRecord)
 }
 
-// GetFriendCount 获取好友数量
-func (s *UserFriendsService) GetFriendCount(userID int64) (int64, error) {
-	return s.repo.GetFriendCount(userID)
+// GetUserFriends 获取用户的所有好友
+func (s *FriendService) GetUserFriends(userID int64) ([]sqlModel.UserFriend, error) {
+	// 获取好友列表
+	friendships, err := s.repo.GetUserFriends(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 为每个好友查询昵称
+	for i := range friendships {
+		var friendID int64
+		// 确定好友ID（好友总是在UserA字段中）
+		friendID = int64(friendships[i].UserA.ID)
+
+		// 查询昵称
+		nickname, err := s.repo.GetFriendNickname(userID, friendID)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			// 如果不是"记录不存在"的错误，返回错误
+			return nil, err
+		}
+
+		// 设置昵称
+		if nickname != nil {
+			friendships[i].NickName = nickname.Nickname
+		} else {
+			friendships[i].NickName = "" // 或者可以设置为默认值
+		}
+	}
+
+	return friendships, nil
+}
+
+// GetFriendRequestsToMe 获取发给我的好友请求
+func (s *FriendService) GetFriendRequestsToMe(userID int64) ([]sqlModel.FriendRequest, error) {
+	return s.repo.GetFriendRequestsToMe(userID)
+}
+
+// GetFriendRequestsFromMe 获取我发出的好友请求
+func (s *FriendService) GetFriendRequestsFromMe(userID int64) ([]sqlModel.FriendRequest, error) {
+	return s.repo.GetFriendRequestsFromMe(userID)
 }

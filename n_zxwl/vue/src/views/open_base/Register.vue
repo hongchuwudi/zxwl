@@ -1,12 +1,12 @@
 <template>
   <div class="login-container">
-    <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+    <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
     <div class="login-box">
       <div class="form-wrapper">
         <div class="decorative-line"></div>
-        <el-form ref="formRef" :rules="data.rules" :model="data.form">
+        <el-form ref="formRef" :rules="rules" :model="form" label-position="top">
           <div class="form-header">
-            <span class="title-text">密码重置</span>
+            <span class="title-text">Welcome to Register</span>
             <div class="title-underline">
               <div class="underline"></div>
               <div class="circle"></div>
@@ -15,162 +15,198 @@
 
           <el-form-item prop="username">
             <el-input
-                size="large"
-                v-model="data.form.username"
+                v-model="form.username"
                 placeholder="用户名"
                 prefix-icon="User"
+                size="large"
                 class="custom-input"
-            ></el-input>
+            />
           </el-form-item>
 
           <el-form-item prop="email">
             <el-input
-                size="large"
-                v-model="data.form.email"
+                v-model="form.email"
                 placeholder="邮箱地址"
                 prefix-icon="Message"
+                size="large"
                 class="custom-input"
-            ></el-input>
+            />
           </el-form-item>
 
           <el-form-item prop="password">
             <el-input
+                v-model="form.password"
+                type="password"
                 show-password
-                size="large"
-                v-model="data.form.password"
-                placeholder="新密码"
+                placeholder="密码"
                 prefix-icon="Lock"
+                size="large"
                 class="custom-input"
-            ></el-input>
+            />
+          </el-form-item>
+
+          <el-form-item prop="confirmPassword">
+            <el-input
+                v-model="form.confirmPassword"
+                type="password"
+                show-password
+                placeholder="确认密码"
+                prefix-icon="Lock"
+                size="large"
+                class="custom-input"
+            />
           </el-form-item>
 
           <div class="verification-container">
             <el-form-item prop="verificationCode" class="verification-input">
               <el-input
-                  size="large"
-                  v-model="data.form.verificationCode"
+                  v-model="form.verificationCode"
                   placeholder="验证码"
-                  prefix-icon="Eleme"
+                  prefix-icon="Key"
+                  size="large"
                   class="custom-input"
-              ></el-input>
+              />
             </el-form-item>
             <el-button
-                @click="getvar"
+                @click="getVerificationCode"
                 size="large"
                 class="verification-btn"
-                :disabled="codeSent"
+                :disabled="isCodeSending"
             >
               {{ codeButtonText }}
             </el-button>
           </div>
 
           <el-button
-              @click="register"
+              @click="handleRegister"
               size="large"
               class="register-btn"
-              :loading="isSubmitting"
+              :loading="isRegistering"
           >
-            <span class="btn-text">重置密码</span>
+            <span class="btn-text">立即注册</span>
             <div class="fill-container"></div>
           </el-button>
 
           <div class="login-link">
-            想起密码？请
-            <router-link to="/Login" class="link-text">立即登录</router-link>
+            已有账号？
+            <router-link to="/login" class="link-text">马上登录</router-link>
           </div>
         </el-form>
       </div>
+    </div>
+    <div class="decorative-bubbles">
+      <div v-for="i in 10" :key="i" class="bubble"></div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from "vue"
-import { ElMessage } from "element-plus"
-import { User, Lock, Message, Eleme } from "@element-plus/icons-vue"
+import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
+import { User, Lock, Message, Key } from '@element-plus/icons-vue'
 import axios from 'axios'
-
-const data = reactive({
-  form: {},
-  rules: {
-    email: [{ required: true, message: '请输入邮箱地址', trigger: 'blur' }],
-    password: [{ required: true, message: '请输入新密码', trigger: 'blur' }],
-    verificationCode: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
-    username: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
-  }
-})
+import DeviceUtils from '@/utils/deviceInfo.js'
 
 const formRef = ref()
-const codeSent = ref(false)
+const isCodeSending = ref(false)
 const codeButtonText = ref('获取验证码')
-const isSubmitting = ref(false)
+const isRegistering = ref(false)
 
+const form = reactive({
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  verificationCode: ''
+})
 
-const getvar = async () => {
-  try {
-    const email = data.form.email
-
-    // 添加邮箱验证
-    if (!email) {
-      ElMessage.warning('请输入邮箱地址')
-      return
+const rules = reactive({
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 12, message: '长度在3到12个字符', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change'] }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 18, message: '长度在6到18个字符', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== form.password) {
+          callback(new Error('两次输入密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
     }
+  ],
+  verificationCode: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 6, message: '验证码为6位数字', trigger: 'blur' }
+  ]
+})
 
-    codeSent.value = true
-    const response = await axios.post('gapi/get_varifycode', { email })
+const getVerificationCode = async () => {
+  try {
+    isCodeSending.value = true
+    const email = form.email;
+    const response = await axios.post(`gapi/get_varifycode`, { email });//返回的响应是 {"error":0,"msg":"验证码已发送"}
 
-    if (response.data.code === 0 || response.data.meg === '验证码已发送') {
+    if (response.data.code === 0) {
       ElMessage.success('验证码已发送')
-
-      // 添加倒计时逻辑
       let countdown = 60
-      codeButtonText.value = `${countdown}秒后重发`
-
       const timer = setInterval(() => {
-        countdown--
         codeButtonText.value = `${countdown}秒后重发`
-
-        if (countdown <= 0) {
+        if (countdown-- <= 0) {
           clearInterval(timer)
           codeButtonText.value = '获取验证码'
-          codeSent.value = false
+          isCodeSending.value = false
         }
       }, 1000)
-
-    } else {
-      ElMessage.error(response.data.msg || '发送失败')
-      codeSent.value = false
     }
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || '发送失败')
-    codeSent.value = false
+    ElMessage.error(error.response.data.msg || '发送失败')
+    isCodeSending.value = false
   }
 }
 
-const register = async () => {
+const handleRegister = async () => {
+  const myDeviceInfo = DeviceUtils.getDeviceInfoJSON()
+
   try {
     await formRef.value.validate()
-    isSubmitting.value = true
+    isRegistering.value = true
 
-    const postData = {
-      username: data.form.username,
-      email: data.form.email,
-      password: data.form.password,
-      verify_code: data.form.verificationCode
+    const registerData = {
+      userName: form.username,
+      email: form.email,
+      password: form.password,
+      confirm: form.confirmPassword,
+      verifyCode: form.verificationCode,
+      device_info: myDeviceInfo
     }
 
-    const response = await axios.post('gapi/user/change-password', postData)
+    const response = await axios.post('gapi/user/register', registerData)
 
     if (response.data.error === 0) {
-      ElMessage.success('密码重置成功')
+      ElMessage.success('注册成功')
       setTimeout(() => {
-        window.location.href = '/Login'
-      }, 1500)
-    }
-  } catch (error) {
-    ElMessage.error(error.response?.data?.message || '操作失败')
+        window.location.href = '/login'
+      }, 1200)
+    }else if(response.data.error === 1003) ElMessage.error('验证码过期')
+    else if(response.data.error === 1004) ElMessage.error('验证码错误')
+    else if(response.data.error === 1005) ElMessage.error('用户或电子邮件已存在')
+  }
+    catch (error) {
+    ElMessage.error(error.response.data.msg || '注册失败')
   } finally {
-    isSubmitting.value = false
+    isRegistering.value = false
   }
 }
 </script>
@@ -184,6 +220,14 @@ const register = async () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative;
   overflow: hidden;
+}
+.page-logo {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 100px; /* 可按需调整 logo 大小 */
+  height: auto;
+  z-index: 3;
 }
 
 .login-container::before {
@@ -213,14 +257,7 @@ const register = async () => {
   max-width: 480px;
   padding: 2rem;
 }
-.page-logo {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  width: 100px; /* 可按需调整 logo 大小 */
-  height: auto;
-  z-index: 3;
-}
+
 .form-wrapper {
   background: rgba(255, 255, 255, 0.97);
   border-radius: 20px;
@@ -249,6 +286,8 @@ const register = async () => {
   font-weight: 600;
   color: #2d3748;
   letter-spacing: 1px;
+  position: relative;
+  display: inline-block;
 }
 
 .title-underline {
@@ -281,6 +320,11 @@ const register = async () => {
 
 .custom-input:hover {
   transform: translateY(-2px);
+}
+
+.custom-input::v-deep(.el-input__wrapper) {
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .verification-container {
@@ -327,6 +371,7 @@ const register = async () => {
 .btn-text {
   position: relative;
   z-index: 2;
+  letter-spacing: 1px;
 }
 
 .fill-container {
@@ -335,10 +380,11 @@ const register = async () => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg,
-  transparent,
-  rgba(255, 255, 255, 0.2),
-  transparent
+  background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
   );
   transition: all 0.6s ease;
 }
@@ -351,6 +397,7 @@ const register = async () => {
   text-align: center;
   margin-top: 1.5rem;
   color: #718096;
+  font-size: 0.9rem;
 }
 
 .link-text {
@@ -358,6 +405,11 @@ const register = async () => {
   font-weight: 500;
   text-decoration: none;
   position: relative;
+  transition: color 0.3s ease;
+}
+
+.link-text:hover {
+  color: #764ba2;
 }
 
 .link-text::after {
@@ -373,6 +425,18 @@ const register = async () => {
 
 .link-text:hover::after {
   width: 100%;
+}
+
+.decorative-bubbles .bubble {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 15s infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-100px) rotate(180deg); }
 }
 
 @media (max-width: 768px) {

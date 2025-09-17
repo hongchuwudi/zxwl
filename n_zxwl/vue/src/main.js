@@ -9,13 +9,11 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import store from '@/vuex/userStorage';
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
-
-const app = createApp(App)
-// 引入代码高亮样式
-import 'highlight.js/styles/atom-one-dark.css'
+import 'highlight.js/styles/atom-one-dark.css'// 引入代码高亮样式
 import 'highlight.js/styles/atom-one-light.css'
 import { BookOpenIcon, PencilIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
 
+const app = createApp(App)
 app.component('BookOpenIcon', BookOpenIcon)
 app.component('PencilIcon', PencilIcon)
 app.component('DocumentTextIcon', DocumentTextIcon)
@@ -33,5 +31,4 @@ app.use(ElementPlus,{
 for(const [key,component] of Object.entries(ElementPlusIconsVue)){
     app.component(key,component)
 }
-
 app.mount('#app')

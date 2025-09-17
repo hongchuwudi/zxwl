@@ -3,7 +3,6 @@ package userApi
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"mymod/config"
 	"mymod/model/param"
@@ -211,7 +210,6 @@ func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	fmt.Println(req)
 	user, err := h.userService.UpdateUser(userID, req)
 	if err != nil {
 		log.Printf("更新用户信息失败: %v", err)

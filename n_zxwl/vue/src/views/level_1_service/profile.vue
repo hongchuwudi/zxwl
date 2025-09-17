@@ -203,6 +203,7 @@
               <a-empty description="暂无设备信息" />
             </div>
           </a-card>
+          <FamilyList />
         </div>
       </div>
     </a-spin>
@@ -212,9 +213,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { message } from 'ant-design-vue'
+import {useUserStore} from "@/utils/auth.js";
 import { UserOutlined, CodeOutlined, LaptopOutlined } from '@ant-design/icons-vue'
 import SnakeAnimation from '@/components/SnakeAnimation.vue'
-import {useUserStore} from "@/utils/auth.js";
+import FamilyList from '@/components/FamilyList.vue'
 import VolunteerMiniCard from '@/components/VolunteerMiniCard.vue'
 const {getUser } = useUserStore()
 import axios from "axios";

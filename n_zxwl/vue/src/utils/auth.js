@@ -21,9 +21,8 @@ const decryptData = (cipherText) => {
     }
 };
 
-const userName = ref(null);
-const userEmail = ref(null);
-const userId = ref(null);
+// 创建响应式变量来存储完整的用户信息
+const userData = ref(null);
 
 // 从localStorage初始化数据
 const initFromStorage = () => {
@@ -31,9 +30,7 @@ const initFromStorage = () => {
     if (encryptedData) {
         const decryptedData = decryptData(encryptedData);
         if (decryptedData) {
-            userName.value = decryptedData.name;
-            userEmail.value = decryptedData.email;
-            userId.value = decryptedData.id;
+            userData.value = decryptedData;
         }
     }
 };
@@ -43,17 +40,15 @@ initFromStorage();
 
 export function useUserStore() {
     // 保存用户信息
-    const saveUser = (userData) => {
+    const saveUser = (userInfo) => {
         // 加密数据
-        const encryptedData = encryptData(userData);
+        const encryptedData = encryptData(userInfo);
 
         // 保存到localStorage
         localStorage.setItem('userData', encryptedData);
 
         // 更新响应式数据
-        userName.value = userData.name;
-        userEmail.value = userData.email;
-        userId.value = userData.id;
+        userData.value = userInfo;
 
         return true;
     };
@@ -62,43 +57,40 @@ export function useUserStore() {
     const getUser = () => {
         // 确保数据最新
         initFromStorage();
-        return {
-            id: userId.value,
-            name: userName.value,
-            email: userEmail.value
-        };
+        return userData.value;
+    };
+
+    // 获取特定用户字段
+    const getUserField = (field) => {
+        initFromStorage();
+        return userData.value ? userData.value[field] : null;
     };
 
     // 删除用户信息
     const deleteUser = () => {
-        userName.value = null;
-        userEmail.value = null;
-        userId.value = null;
-
+        userData.value = null;
         localStorage.removeItem('userData');
-
         return true;
     };
 
     // 判断是否登录
     const isLoggedIn = computed(() => {
-        return !!userId.value && !!userName.value;
+        return !!userData.value && !!userData.value.id;
     });
 
     // 检查登录状态（同步方式）
     const checkLoginStatus = () => {
         initFromStorage(); // 确保数据最新
-        return !!userId.value && !!userName.value
-    }
+        return !!userData.value && !!userData.value.id;
+    };
 
     return {
-        userId,
-        userName,
-        userEmail,
+        userData,
         saveUser,
         getUser,
+        getUserField,
         deleteUser,
         isLoggedIn, // 响应式计算属性
         checkLoginStatus // 同步检查函数
-    }
+    };
 }

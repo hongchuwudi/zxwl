@@ -136,7 +136,7 @@ import {useRoute, useRouter} from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
-const { userName, userEmail, getUser ,checkLoginStatus} = useUserStore();
+const { getUser ,checkLoginStatus} = useUserStore();
 
 // 定义组件属性
 const props = defineProps({
@@ -153,6 +153,7 @@ const visible = computed({
 
 const formRef = ref(null)
 const submitting = ref(false)
+const userLocal = computed(() => getUser())
 
 // 表单数据
 // 表单数据
@@ -174,8 +175,6 @@ const formData = reactive({
   card_live_id: '',
   class_name: ''
 })
-
-
 
 // 表单验证规则
 const rules = {
@@ -268,8 +267,8 @@ const handleSubmit = async () => {
     // 准备提交数据
     const submitData = {
       ...formData,
-      publisher_email: userEmail.value , // 发布者邮箱
-      from_source: userName.value, // 来源字段先空着
+      publisher_email: userLocal.email , // 发布者邮箱
+      from_source: userLocal.name, // 来源字段先空着
       // 其他后端需要的字段...
     }
 
@@ -299,10 +298,8 @@ watch(visible, (newVal) => {
 onMounted(() => {
   // 渲染前加载用户身份
  getUser()
-  console.log('用户身份：', userName.value)
-  console.log('用户邮箱：', userEmail.value)
+
   if (!checkLoginStatus()) {
-    // 可以在这里执行重定向或其他操作
     ElMessage.error('请先登录！')
     router.push('/login')
   }

@@ -5,17 +5,19 @@ import (
 	"log"
 	"mymod/api/aiApi"
 	"mymod/api/baseApi"
+	"mymod/api/chatApi"
 	"mymod/api/mixedApi"
 	"mymod/api/newsApi"
 	"mymod/api/oldChatApi"
 	"mymod/api/oldManyMgrApi"
 	"mymod/api/recomApi"
 	"mymod/api/schoolApi"
+	"mymod/api/scoreApi"
 	"mymod/api/specialApi"
+	"mymod/api/userApi"
 	"mymod/api/userChooseApi"
 	userFriendsApi "mymod/api/userFriendApi"
-
-	"mymod/api/userApi"
+	"mymod/api/websocketApi"
 	"mymod/config"
 	"net/http"
 
@@ -26,7 +28,10 @@ var (
 	uploadHandler      = baseApi.NewUploadHandler()
 	userHandler        = userApi.NewUserHandler()
 	userChooseHandler  = userChooseApi.NewUserChooseHandler()
-	userFriendsHandler = userFriendsApi.NewUserFriendsHandler()
+	userFriendsHandler = userFriendsApi.NewFriendHandler()
+	chatHandler        = chatApi.NewChatHandler()
+	wsHandler          = websocketApi.NewWebSocketHandler()
+	scoreHandler       = scoreApi.NewScoreHandler()
 )
 
 func main() {
@@ -42,13 +47,10 @@ func main() {
 	}
 	go oldChatApi.HandleMessages()
 
-	// 用户接口
-	router.HandleFunc("/get_varifycode", oldManyMgrApi.GetVerifyCodeHandler).Methods("POST") // 获取验证码
-
-	// 家庭接口
-	router.HandleFunc("/family/remove", oldManyMgrApi.FamilyRemoveHandler).Methods("DELETE")
-	router.HandleFunc("/family/add", oldManyMgrApi.FamilyAddHandler).Methods("POST")
-	router.HandleFunc("/family/find", oldManyMgrApi.FamilyFindHandler).Methods("GET")
+	// WebSocket路由
+	router.HandleFunc("/ws/user", wsHandler.HandleWebSocket).Methods("GET")        // 建立 WebSocket 连接
+	router.HandleFunc("/ws/send/{userID}", wsHandler.SendMessage).Methods("POST")  // 发送消息（HTTP API）
+	router.HandleFunc("/ws/online-users", wsHandler.GetOnlineUsers).Methods("GET") // 获取在线用户列表
 
 	// 聊天接口
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +61,6 @@ func main() {
 	router.HandleFunc("/chat/unread", oldManyMgrApi.UnreadHandler).Methods("GET")
 	router.HandleFunc("/chat/batch-unread", oldManyMgrApi.BatchUnreadHandler).Methods("GET")
 	router.HandleFunc("/chat/mark-read", oldManyMgrApi.MarkReadHandler).Methods("POST")
-	router.HandleFunc("/chat/send", oldManyMgrApi.SendHandler).Methods("POST")
 
 	// 政策接口
 	router.HandleFunc("/policy", oldManyMgrApi.PolicyHandler).Methods("GET")
@@ -67,16 +68,12 @@ func main() {
 	router.HandleFunc("/policy/search", oldManyMgrApi.PolicySearchHandler).Methods("POST")
 	router.HandleFunc("/policy/{id}", oldManyMgrApi.PolicyDeleteHandler).Methods("DELETE")
 
-	// 志愿接口
-	router.HandleFunc("/volunteer/fetch", oldManyMgrApi.FetchVolunteerHandler).Methods("GET")
-	router.HandleFunc("/professional/upsert", oldManyMgrApi.ProfessionalUpsertHandler).Methods("POST")
-
 	// 日志接口
 	router.HandleFunc("/log", oldManyMgrApi.LogInsertHandler).Methods("POST")
 	router.HandleFunc("/logs", oldManyMgrApi.LogRetrieveHandler).Methods("GET")
 
 	// 新加的 学校/专业/推荐
-	router.HandleFunc("/recommends", recomApi.RecommendationHandlers).Methods("GET")                     // 推荐服务
+	router.HandleFunc("/recommends", recomApi.RecommendationHandlers).Methods("POST")                    // 推荐服务
 	router.HandleFunc("/schools/profiles/{id}", schoolApi.GetSchoolProfileByIDHandler).Methods("GET")    // 学校查询
 	router.HandleFunc("/specials/profiles/{id}", specialApi.GetSpecialProfileByIDHandler).Methods("GET") // 特殊查询
 	router.HandleFunc("/professional/querys", specialApi.ProfessionalQueryHandlers).Methods("POST")      // 专业查询
@@ -84,6 +81,10 @@ func main() {
 	router.HandleFunc("/searchSchAndSpe/", mixedApi.SearchSchoolAndSpecial).Methods("GET")               // 搜索学校和专业
 	router.HandleFunc("/special/name", specialApi.GetSpecialIDByNameHandler).Methods("GET")              // 根据专业名称获取专业ID
 	router.HandleFunc("/school/name", schoolApi.GetSchoolIDByNameHandler).Methods("GET")                 // 根据学校名称获取学校ID
+
+	// 新加的 一分一段
+	router.HandleFunc("/scores/data", scoreHandler.GetScoreDataHandler).Methods("GET")
+	router.HandleFunc("/scores/years", scoreHandler.GetAvailableYearsHandler).Methods("GET")
 
 	// 新加的 资讯论坛相关路由
 	router.HandleFunc("/news/list", newsApi.NewsQueryHandlers).Methods("POST")                 // 分页条件查询资讯
@@ -107,6 +108,7 @@ func main() {
 	router.HandleFunc("/aiChat", aiApi.AIHandlers).Methods("POST")
 
 	// 新加的 用户相关路由
+	router.HandleFunc("/get_varifycode", oldManyMgrApi.GetVerifyCodeHandler).Methods("POST") // 获取验证码
 	router.HandleFunc("/user/register", userHandler.RegisterHandler).Methods("POST")
 	router.HandleFunc("/user/login", userHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/user/{id}", userHandler.GetUserHandler).Methods("GET")
@@ -128,13 +130,26 @@ func main() {
 	router.HandleFunc("/user/{userID}/choices/all", userChooseHandler.DeleteAllUserChoices).Methods("DELETE")
 
 	// 好友相关路由
-	router.HandleFunc("/user/{userID}/friends", userFriendsHandler.GetFriends).Methods("GET")
-	router.HandleFunc("/user/{userID}/friends-count", userFriendsHandler.GetFriendCount).Methods("GET")
-	router.HandleFunc("/user/{userID}/friends-pending", userFriendsHandler.GetPendingRequests).Methods("GET")
-	router.HandleFunc("/user/{userID}/friends", userFriendsHandler.AddFriend).Methods("POST")
-	router.HandleFunc("/user/{userID}/friends/{friendID}/accept", userFriendsHandler.AcceptFriend).Methods("POST")
-	router.HandleFunc("/user/{userID}/friends/{friendID}/reject", userFriendsHandler.RejectFriend).Methods("POST")
-	router.HandleFunc("/user/{userID}/friends/{friendID}", userFriendsHandler.DeleteFriend).Methods("DELETE")
+	router.HandleFunc("/user/{userID}/friend/request/{friendID}", userFriendsHandler.SendFriendRequest).Methods("POST")   //发送好友请求
+	router.HandleFunc("/user/{userID}/friend/accept/{requestID}", userFriendsHandler.AcceptFriendRequest).Methods("POST") //接受好友请求
+	router.HandleFunc("/user/{userID}/friend/reject/{requestID}", userFriendsHandler.RejectFriendRequest).Methods("POST") // 拒绝好友请求
+	router.HandleFunc("/user/{userID}/friends", userFriendsHandler.GetUserFriends).Methods("GET")                         //获取我的好友列表
+	router.HandleFunc("/user/{userID}/friend-requests", userFriendsHandler.GetFriendRequestsToMe).Methods("GET")          //获取发给我的好友请求
+	router.HandleFunc("/user/{userID}/friend/{friendID}/nickname", userFriendsHandler.SetFriendNickname).Methods("PUT")   //设置好友昵称
+	router.HandleFunc("/user/{userID}/friend/{friendID}", userFriendsHandler.DeleteFriend).Methods("DELETE")              //删除好友
+
+	// 聊天相关路由
+	router.HandleFunc("/user/{userID}/chat/friend/{friendID}/history", chatHandler.GetFriendChatHistory).Methods("GET") // 获得好友历史消息
+	router.HandleFunc("/user/{userID}/chat/mark-read/{friendID}", chatHandler.MarkMessagesAsRead).Methods("POST")
+	router.HandleFunc("/user/{userID}/chat/friend/send", chatHandler.SendFriendMessage).Methods("POST")
+	router.HandleFunc("/user/{userID}/chat/unread-count", chatHandler.GetUnreadCount).Methods("GET")
+	router.HandleFunc("/user/{userID}/chat/unread-count/{friendID}", chatHandler.GetUnreadCountByFriend).Methods("GET")
+	router.HandleFunc("/user/{userID}/chat/recent", chatHandler.GetRecentChats).Methods("GET")
+	router.HandleFunc("/user/{userID}/chat/message/{messageID}", chatHandler.DeleteFriendMessage).Methods("DELETE")
+	router.HandleFunc("/user/{userID}/chat/clear/{friendID}", chatHandler.ClearChatHistory).Methods("DELETE")
+	// 群聊相关路由
+	router.HandleFunc("/chat/room/{meetingID}/history", chatHandler.GetRoomChatHistory).Methods("GET")
+	router.HandleFunc("/user/{userID}/chat/room/send", chatHandler.SendRoomMessage).Methods("POST")
 
 	// 添加CORS中间件
 	handler := corsMiddleware(router)

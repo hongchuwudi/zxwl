@@ -1,34 +1,32 @@
-// Package userFriendsApi api/user_friends_api.go
-package userFriendsApi
+// api/friend_api.go
+package api
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"mymod/config"
-	"mymod/model/sqlModel"
 	"mymod/repositories/userFriendsRepo"
-	"mymod/service"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
+	"mymod/service"
 )
 
-type UserFriendsHandler struct {
-	service *service.UserFriendsService
+type FriendHandler struct {
+	friendService *service.FriendService
 }
 
-// NewUserFriendsHandler 使用默认配置创建handler
-func NewUserFriendsHandler() *UserFriendsHandler {
-	repo := userFriendsRepo.NewUserFriendsRepository(config.GetDB())
-	serv := service.NewUserFriendsService(repo)
-	return &UserFriendsHandler{
-		service: &serv,
-	}
+func NewFriendHandler() *FriendHandler {
+	friendRepo := userFriendsRepo.NewFriendRepository(config.GetDB())
+	friendServices := service.NewFriendService(friendRepo)
+	return &FriendHandler{friendService: friendServices}
 }
 
-// AddFriend 添加好友
-func (h *UserFriendsHandler) AddFriend(w http.ResponseWriter, r *http.Request) {
+// SendFriendRequest 发送好友请求
+func (h *FriendHandler) SendFriendRequest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr := vars["userID"]
+	friendIDStr := vars["friendID"]
 
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
@@ -36,59 +34,41 @@ func (h *UserFriendsHandler) AddFriend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request sqlModel.AddFriendRequest
+	friendID, err := strconv.ParseInt(friendIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"code": 400, "message": "无效的好友ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	var request struct {
+		Salutation *string `json:"salutation"`
+		Message    *string `json:"request_message"`
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, `{"code": 400, "message": "无效的请求数据"}`, http.StatusBadRequest)
 		return
 	}
 
-	if err := h.service.AddFriend(userID, &request); err != nil {
-		http.Error(w, `{"code": 500, "message": "添加好友失败: `+err.Error()+`"}`, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"code":    201,
-		"message": "好友请求已发送",
-	})
-}
-
-// AcceptFriend 同意好友请求
-func (h *UserFriendsHandler) AcceptFriend(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userIDStr := vars["userID"]
-	friendIDStr := vars["friendID"]
-
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	err, friResId := h.friendService.SendFriendRequest(userID, friendID, request.Salutation, request.Message)
 	if err != nil {
-		http.Error(w, `{"code": 400, "message": "无效的用户ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	friendID, err := strconv.ParseInt(friendIDStr, 10, 64)
-	if err != nil {
-		http.Error(w, `{"code": 400, "message": "无效的好友ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	if err := h.service.AcceptFriend(userID, friendID); err != nil {
-		http.Error(w, `{"code": 500, "message": "同意好友请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
+		http.Error(w, `{"code": 500, "message": "发送请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"code":    200,
-		"message": "好友请求已同意",
+		"message": "好友请求发送成功",
+		"id":      friResId,
 	})
 }
 
-// RejectFriend 拒绝好友请求
-func (h *UserFriendsHandler) RejectFriend(w http.ResponseWriter, r *http.Request) {
+// AcceptFriendRequest 接受好友请求
+func (h *FriendHandler) AcceptFriendRequest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr := vars["userID"]
-	friendIDStr := vars["friendID"]
+	requestIDStr := vars["requestID"]
 
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
@@ -96,29 +76,29 @@ func (h *UserFriendsHandler) RejectFriend(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	friendID, err := strconv.ParseInt(friendIDStr, 10, 64)
+	requestID, err := strconv.ParseInt(requestIDStr, 10, 64)
 	if err != nil {
-		http.Error(w, `{"code": 400, "message": "无效的好友ID"}`, http.StatusBadRequest)
+		http.Error(w, `{"code": 400, "message": "无效的请求ID"}`, http.StatusBadRequest)
 		return
 	}
 
-	if err := h.service.RejectFriend(userID, friendID); err != nil {
-		http.Error(w, `{"code": 500, "message": "拒绝好友请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
+	if err := h.friendService.AcceptFriendRequest(requestID, userID); err != nil {
+		http.Error(w, `{"code": 500, "message": "接受请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"code":    200,
-		"message": "好友请求已拒绝",
+		"message": "好友请求已接受",
 	})
 }
 
-// DeleteFriend 删除好友
-func (h *UserFriendsHandler) DeleteFriend(w http.ResponseWriter, r *http.Request) {
+// RejectFriendRequest 拒绝好友请求
+func (h *FriendHandler) RejectFriendRequest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr := vars["userID"]
-	friendIDStr := vars["friendID"]
+	requestIDStr := vars["requestID"]
 
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
@@ -126,26 +106,26 @@ func (h *UserFriendsHandler) DeleteFriend(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	friendID, err := strconv.ParseInt(friendIDStr, 10, 64)
+	requestID, err := strconv.ParseInt(requestIDStr, 10, 64)
 	if err != nil {
-		http.Error(w, `{"code": 400, "message": "无效的好友ID"}`, http.StatusBadRequest)
+		http.Error(w, `{"code": 400, "message": "无效的请求ID"}`, http.StatusBadRequest)
 		return
 	}
 
-	if err := h.service.DeleteFriend(userID, friendID); err != nil {
-		http.Error(w, `{"code": 500, "message": "删除好友失败: `+err.Error()+`"}`, http.StatusInternalServerError)
+	if err := h.friendService.RejectFriendRequest(requestID, userID); err != nil {
+		http.Error(w, `{"code": 500, "message": "拒绝请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"code":    200,
-		"message": "好友已删除",
+		"message": "好友请求已接受",
 	})
 }
 
-// GetFriends 获取好友列表
-func (h *UserFriendsHandler) GetFriends(w http.ResponseWriter, r *http.Request) {
+// GetUserFriends 获取用户好友列表
+func (h *FriendHandler) GetUserFriends(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr := vars["userID"]
 
@@ -155,7 +135,7 @@ func (h *UserFriendsHandler) GetFriends(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	friends, err := h.service.GetFriends(userID)
+	friends, err := h.friendService.GetUserFriends(userID)
 	if err != nil {
 		http.Error(w, `{"code": 500, "message": "获取好友列表失败: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
@@ -169,8 +149,8 @@ func (h *UserFriendsHandler) GetFriends(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// GetPendingRequests 获取待处理的好友请求
-func (h *UserFriendsHandler) GetPendingRequests(w http.ResponseWriter, r *http.Request) {
+// GetFriendRequestsToMe 获取发给我的好友请求
+func (h *FriendHandler) GetFriendRequestsToMe(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr := vars["userID"]
 
@@ -180,9 +160,9 @@ func (h *UserFriendsHandler) GetPendingRequests(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	requests, err := h.service.GetPendingRequests(userID)
+	requests, err := h.friendService.GetFriendRequestsToMe(userID)
 	if err != nil {
-		http.Error(w, `{"code": 500, "message": "获取待处理请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
+		http.Error(w, `{"code": 500, "message": "获取好友请求失败: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -194,10 +174,11 @@ func (h *UserFriendsHandler) GetPendingRequests(w http.ResponseWriter, r *http.R
 	})
 }
 
-// GetFriendCount 获取好友数量
-func (h *UserFriendsHandler) GetFriendCount(w http.ResponseWriter, r *http.Request) {
+// SetFriendNickname 设置好友昵称
+func (h *FriendHandler) SetFriendNickname(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr := vars["userID"]
+	friendIDStr := vars["friendID"]
 
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
@@ -205,16 +186,59 @@ func (h *UserFriendsHandler) GetFriendCount(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	count, err := h.service.GetFriendCount(userID)
+	friendID, err := strconv.ParseInt(friendIDStr, 10, 64)
 	if err != nil {
-		http.Error(w, `{"code": 500, "message": "获取好友数量失败: `+err.Error()+`"}`, http.StatusInternalServerError)
+		http.Error(w, `{"code": 400, "message": "无效的好友ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	var request struct {
+		Nickname string `json:"nickname"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, `{"code": 400, "message": "无效的请求数据"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.friendService.SetFriendNickname(userID, friendID, request.Nickname); err != nil {
+		http.Error(w, `{"code": 500, "message": "设置昵称失败: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"code":    200,
-		"message": "success",
-		"data":    count,
+		"message": "昵称设置成功",
+	})
+}
+
+// DeleteFriend 删除好友
+func (h *FriendHandler) DeleteFriend(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userIDStr := vars["userID"]
+	friendIDStr := vars["friendID"]
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"code": 400, "message": "无效的用户ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	friendID, err := strconv.ParseInt(friendIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"code": 400, "message": "无效的好友ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.friendService.DeleteFriend(userID, friendID); err != nil {
+		http.Error(w, `{"code": 500, "message": "删除好友失败: `+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"code":    200,
+		"message": "好友删除成功",
 	})
 }

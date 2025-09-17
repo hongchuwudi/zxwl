@@ -2,7 +2,7 @@
   <div class="container">
     <!-- logo 图片 -->
     <div class="logo-container">
-      <img src="../assets/zxwllogo.png" alt="智选未来logo">
+      <img src="../../assets/zxwllogo.png" alt="智选未来logo">
     </div>
     <!-- 星空背景 -->
     <div class="star-field">
@@ -299,7 +299,7 @@ onUnmounted(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: url(../assets/loginloge.png) no-repeat center center fixed;
+  background: url(../../assets/loginloge.png) no-repeat center center fixed;
   background-size: cover;
 }
 

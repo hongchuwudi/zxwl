@@ -257,29 +257,17 @@ const priorityOptions = [
 
 // 计算属性
 const userInitial = computed(() => {
-  if (userInfo.value.displayName) {
+  if (userInfo.value.displayName)
     return userInfo.value.displayName.charAt(0).toUpperCase()
-  }
-  if (userInfo.value.username) {
-    return userInfo.value.username.charAt(0).toUpperCase()
-  }
+  if (userInfo.value.username) return userInfo.value.username.charAt(0).toUpperCase()
   return 'U'
 })
-
 const remainingSlots = computed(() => MAX_VOLUNTEERS - volunteers.value.length)
 const canAddMore = computed(() => remainingSlots.value > 0)
-const selectedSchoolCount = computed(() =>
-    volunteers.value.filter(v => v.schoolName && v.schoolName.trim()).length
-)
-const selectedMajorCount = computed(() =>
-    volunteers.value.filter(v => v.major && v.major.trim()).length
-)
-const highestPriorityCount = computed(() =>
-    volunteers.value.filter(v => v.priority === 0).length
-)
-
-// 按优先级排序的志愿列表
-const sortedVolunteers = computed(() => [...volunteers.value].sort((a, b) => a.priority - b.priority))
+const selectedSchoolCount = computed(() => volunteers.value.filter(v => v.schoolName && v.schoolName.trim()).length)
+const selectedMajorCount = computed(() => volunteers.value.filter(v => v.major && v.major.trim()).length)
+const highestPriorityCount = computed(() => volunteers.value.filter(v => v.priority === 0).length)
+const sortedVolunteers = computed(() => [...volunteers.value].sort((a, b) => a.priority - b.priority)) // 按优先级排序的志愿列表
 
 // 生命周期
 onMounted(async () => {
@@ -408,7 +396,7 @@ const resetForm = () => {
 }
 
 const goToRecommendation = () => router.push('/recommends')
-const goToVideoCall = () => router.push('/videoCall')
+const goToVideoCall = () => router.push('/user-friend')
 const goToUniversitySearch = () => router.push('/allSchool')
 const goToMajorSearch = () => router.push('/professional')
 const goToAIChat = () => router.push('/aismartsel')

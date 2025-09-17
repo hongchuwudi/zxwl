@@ -168,10 +168,10 @@ import {
 } from '@ant-design/icons-vue'
 
 // 组件导入 - 只添加 VideoContainer，其他保持不变
-import ParticipantsPanel from '../components/ParticipantsPanel.vue'
-import InviteDialog from '../components/InviteDialog.vue'
-import VideoContainer from '../components/VideoContainer.vue'
-
+import ParticipantsPanel from '../../components/ParticipantsPanel.vue'
+import InviteDialog from '../../components/InviteDialog.vue'
+import VideoContainer from '../../components/VideoContainer.vue'
+import {message} from "ant-design-vue";
 const router = useRouter()
 
 const isMuted = ref(true)   // 静音状态
@@ -320,6 +320,7 @@ const toggleAudio = (enabled) => {
 // 生命周期 - 保持原样
 onMounted(() => {
   getMediaStream()
+  message.success('视频会议开发中...敬请期待')
 })
 
 onUnmounted(() => {

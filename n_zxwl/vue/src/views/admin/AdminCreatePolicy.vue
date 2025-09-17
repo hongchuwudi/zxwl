@@ -2,7 +2,7 @@
   <div class="admin-policy-container">
     <!-- 头部导航栏 -->
     <nav class="header-nav">
-      <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+      <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
       <div class="nav-content">
         <h1 class="logo">智选未来·政策信息发布系统</h1>
         <el-button class="back-btn" @click="goBack">

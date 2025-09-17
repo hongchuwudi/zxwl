@@ -169,7 +169,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { Picture, Loading, Close, User, Clock, View, Plus } from '@element-plus/icons-vue'
 import { formatTime } from '@/utils/date.js'
-import AddNewsDrawer from '../components/addNewsDrawer.vue'
+import AddNewsDrawer from '../../components/addNewsDrawer.vue'
 
 const router = useRouter()
 const hoverCardId = ref(null)

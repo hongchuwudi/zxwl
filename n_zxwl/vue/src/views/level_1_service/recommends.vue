@@ -1,6 +1,6 @@
 <template>
   <div :style="containerStyle" class="container">
-    <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+    <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
     <div class="back-button" @click="handleBack">
       <el-icon :size="28" class="back-icon">
         <Back/>

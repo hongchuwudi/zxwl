@@ -50,6 +50,7 @@ func (s *UserService) Login(req userParam2.LoginRequest) (*userParam2.LoginRespo
 
 	// 生成token（这里简化处理，实际应该使用JWT等）
 	token := generateToken(user.ID)
+	user.DeviceInfo = req.DeviceInfo
 
 	// 更新最后在线时间
 	now := time.Now()

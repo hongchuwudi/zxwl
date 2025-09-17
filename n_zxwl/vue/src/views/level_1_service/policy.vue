@@ -1,7 +1,7 @@
 <template>
   <!-- 头部导航栏 -->
   <nav class="header-nav">
-    <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+    <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
     <div class="nav-content">
       <h1 class="logo">智选未来·最新高考政策解读</h1>
       <div class="button-group">
@@ -213,16 +213,6 @@ onMounted(async () => {
     "email": localStorage.getItem('userEmail'),
     "date": new Date().toISOString().slice(0, 19).replace('T', ' '),
     "operation": "用户查看高考政策"
-  };
-
-  try {
-    await axios.post("gapi/log", logData, {
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
-  } catch (error) {
-    console.error("日志记录失败:", error)
   }
 
   await fetchPolicies()

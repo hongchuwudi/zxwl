@@ -4,18 +4,6 @@ import (
 	"time"
 )
 
-// UserInfo User 用户表
-type UserInfo struct {
-	ID        int       `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
-	UID       *int      `json:"uid,omitempty" gorm:"column:uid"`
-	Name      string    `json:"name" gorm:"column:name;not null"`
-	Pwd       string    `json:"-" gorm:"column:pwd;not null"` // 密码字段通常不序列化到JSON
-	Email     string    `json:"email" gorm:"column:email;not null"`
-	Token     *string   `json:"token,omitempty" gorm:"column:token"`
-	CreatedAt time.Time `json:"created_at" gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at;autoUpdateTime"`
-}
-
 // UserProfile 用户模型
 type UserProfile struct {
 	ID             int        `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -37,10 +25,10 @@ type UserProfile struct {
 	UpdatedAt      time.Time  `json:"updatedAt"`
 
 	// 关联关系
-	Meetings         []ChatMeetingParticipant `gorm:"foreignKey:UserID" json:"-"`
-	Friends          []UserFriend             `gorm:"foreignKey:UserID" json:"-"`
-	SentMessages     []ChatMessage            `gorm:"foreignKey:SenderID" json:"-"`
-	ReceivedMessages []ChatMessage            `gorm:"foreignKey:ReceiverID" json:"-"`
+	Meetings []ChatMeetingParticipant `gorm:"foreignKey:UserID" json:"-"`
+	//Friends          []UserFriend             `gorm:"foreignKey:UserID" json:"-"`
+	SentMessages     []ChatMessage `gorm:"foreignKey:SenderID" json:"-"`
+	ReceivedMessages []ChatMessage `gorm:"foreignKey:ReceiverID" json:"-"`
 }
 
 // ChatMeetingRoom 会议室模型

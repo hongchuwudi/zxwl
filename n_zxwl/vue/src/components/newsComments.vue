@@ -221,7 +221,8 @@ const props = defineProps({
 
 const emit = defineEmits(['comment-added'])
 
-const { userEmail, userName, getUser } = useUserStore()
+const { getUser } = useUserStore()
+const userLocal = computed(() => getUser())
 
 // 响应式数据
 const comments = ref([])
@@ -286,8 +287,8 @@ const submitComment = async () => {
     submitting.value = true
     const commentData = {
       news_id: Number(props.newsId),
-      commenter_name: userName.value,
-      commenter_email: userEmail.value,
+      commenter_name: getUser().name,
+      commenter_email: getUser().email,
       comment_content: newComment.value.trim()
     }
 

@@ -3,7 +3,7 @@
     <!-- 头部导航 -->
     <header class="header">
       <div class="header-content">
-        <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+        <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
 
         <!-- 导航分类区域 -->
         <div class="nav-container">

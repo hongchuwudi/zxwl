@@ -4,7 +4,7 @@
     <div class="top-navbar">
       <div class="nav-content">
         <div class="brand-section">
-          <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+          <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
           <h1 class="brand-title">智选未来·用户管理中心</h1>
         </div>
         <div class="action-buttons">

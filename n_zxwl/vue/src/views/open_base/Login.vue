@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <!-- 页面左上角添加 logo -->
-    <img src="../assets/zxwllogo.png" alt="Logo" class="page-logo">
+    <img src="../../assets/zxwllogo.png" alt="Logo" class="page-logo">
     <!-- 星空背景 -->
     <div class="star-field">
       <div
@@ -69,7 +69,9 @@ import { Message, Lock } from "@element-plus/icons-vue";
 import axios from "axios";
 import { useUserStore } from '@/utils/auth.js';
 const { saveUser } = useUserStore();
-
+import DeviceUtils from '@/utils/deviceInfo.js'
+import { initWebSocket } from '@/utils/wsUtil.js'; // 导入 WebSocket
+import { useRouter } from 'vue-router';
 // 星空配置
 const stars = Array.from({ length: 150 }, (_, i) => ({
   style: {
@@ -78,7 +80,7 @@ const stars = Array.from({ length: 150 }, (_, i) => ({
     animationDelay: Math.random() * 3 + "s",
   },
 }));
-
+const router = useRouter();
 const data = reactive({
   form: {
     email: "",
@@ -86,8 +88,7 @@ const data = reactive({
   },
   rules: {
     email: [
-      { required: true, message: "请输入邮箱地址", trigger: "blur" },
-      { type: "email", message: "邮箱格式不正确", trigger: ["blur", "change"] },
+      { required: true, message: "请输入邮箱地址或用户名", trigger: "blur" },
     ],
     passwd: [
       { required: true, message: "请输入密码", trigger: "blur" },
@@ -108,42 +109,58 @@ const login = () => {
       const response = await axios.post("gapi/user/login", {
         login: data.form.email,
         password: data.form.passwd,
+        device_info: DeviceUtils.getDeviceInfoJSON()
       }, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      console.log()
+      if (response.data.error === 0 && response.data.code === 0) {
+        ElMessage.success("登录成功,欢迎来到智选未来！");
 
-      if (response.data.code === 0) {
-        ElMessage.success("登录成功");
-
-        // 保存用户信息（从邮箱提取用户名）
+        // 保存用户信息
         const userInfo = {
           name: response.data.data.user.username,
           id: response.data.data.user.id,
-          email: data.form.email
+          email: data.form.email,
+          displayName: response.data.data.user.displayName,
+          avatarUrl: response.data.data.user.avatarUrl,
+          gender: response.data.data.user.gender,
+          birthYear: response.data.data.user.birthYear,
+          location: response.data.data.user.location,
+          bio: response.data.data.user.bio,
+          isOnline: response.data.data.user.isOnline,
+          token: response.data.data.token // 保存 token
         };
         saveUser(userInfo);
-        // window.localStorage.setItem("userEmail", data.form.email);
+
+        // 开启 WebSocket 连接
+        try {
+          initWebSocket(userInfo.id, userInfo.email);
+          console.log('WebSocket连接初始化成功');
+        } catch (error) {
+          console.error('WebSocket连接失败:', error);
+          ElMessage.error('WebSocket连接失败');
+        }
 
         // 添加日志
-        const logData = {
-          "email": data.form.email,
-          "date": new Date().toISOString().slice(0, 19).replace('T', ' '),
-          "operation": "用户登录"
-        };
-          const logResponse = await axios.post("gapi/log", logData, {
-            headers: {
-              "Content-Type": "application/json"
-            }
-          });
+        // const logData = {
+        //   "email": data.form.email,
+        //   "date": new Date().toISOString().slice(0, 19).replace('T', ' '),
+        //   "operation": "用户登录"
+        // };
+        // const logResponse = await axios.post("gapi/log", logData, {
+        //   headers: {
+        //     "Content-Type": "application/json"
+        //   }
+        // });
+
         setTimeout(() => {
-          window.location.href = "/Zxwl";
+          router.push('/Zxwl');
         }, 750);
       } else {
-        ElMessage.error(response.data.msg || "登录失败");
+        ElMessage.error(response.data.message || "登录失败");
       }
     } catch (error) {
       ElMessage.error(`请求失败：${error.message}`);

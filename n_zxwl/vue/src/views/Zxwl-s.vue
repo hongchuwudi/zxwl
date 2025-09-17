@@ -176,9 +176,10 @@ let particleEngine = null;
 const navItems = [
   { name: '智选对话', path: '/aismartsel'},
   { name: '智能推荐', path: '/recommends' },
-  { name: '专业解析', path: '/professional' },
+  { name: '一分一段', path: '/score-section' },
   { name: '志愿模拟', path: '/simulate' },
   { name: '政策阅读', path: '/policy'},
+  {name: '家庭共享',  path: '/user-friend'}
 ];
 
 const carouselItems = ref([
@@ -403,7 +404,7 @@ onUnmounted(() => {
   transition: all 0.3s ease;
   display: flex;
   justify-content: space-between;
-  width:62%;
+  width:67%;
 
 }
 
@@ -712,7 +713,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
 }
 .search-bar {
-  width: 400px;
+  width: 500px;
   height: 56px;
   background: rgb(255, 255, 255);
   border-radius: 2rem;

@@ -20,7 +20,7 @@
     <!-- 内容区域 -->
     <div class="content">
       <div class="logo-container">
-        <img src="../assets/zxwllogo.png" alt="智选未来" class="logo">
+        <img src="../../assets/zxwllogo.png" alt="智选未来" class="logo">
       </div>
 
       <div class="main-content">
